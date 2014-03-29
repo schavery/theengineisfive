@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+		html,body,#container {
+			height:100%;
+		}
+		body {
+			margin: 0;
+			background:black;
+		}
+		#banner {
+			position: fixed;
+			top:0;
+		}
+		#container {
+			position: relative;
+			z-index: -1;
+			top: 170px;
+		}
+		.inst,
+		.tweet {
+			margin:1em;
+			padding:16px;
+			border-radius: 5px;
+			background:rgba(255,255,255,0.2);
+			color:white;
+			width:360px;
+			/*float:left;
+			position: relative;*/
+			min-height: 140px;
+		}
+		.user img {
+			padding-right:10px;
+		}
+		.inst span,
+		.tweet span,
+		.user span {
+			font-family:sans-serif;
+		}
+		.user span {
+			font-size:20px;
+			padding-bottom: 10px;
+			display:inline-block;
+		}
+		.party {
+			color:#EC008C;
+		}
+		.instapic {
+			width:306px;
+			margin:auto;
+		}
+		.inst .user img {
+			width:48px;
+			height:48px;
+		}
+		.inst .body img {
+			padding-bottom: 10px;
+		}
+	</style>
+</head>
+<body>
+	<img id="banner" src="engineis5banner.png" width="100%" />
+	<div id="container"></div>
+</body>
+<script src="masonry.js"></script>
+<script type="text/javascript">
+	var xhr = new XMLHttpRequest(),
+	ttparam = '',
+	instpt = '',
+	instpu = '',
+	cont = document.getElementById('container'),
+	body = document.getElementsByTagName('body')[0],
+	msnry = new Masonry(cont);
+
+	var tweet = function() {
+		if(ttparam.length) {
+			xhr.open("GET","http://theengineisfive.herokuapp.com/twee?" + ttparam,true);
+		} else {
+			xhr.open("GET","http://theengineisfive.herokuapp.com/twee",true);
+		}
+
+		xhr.onreadystatechange = ttreceiver;
+		xhr.send();
+	}
+
+	var ttreceiver = function() {
+		if (xhr.readyState === 4) {
+			var d = JSON.parse(xhr.response);
+
+			if(d.statuses.length) {
+				ttparam = d.search_metadata.max_id_str;
+				for(var i = d.statuses.length; i > 0; i--) {
+					var ele = tttemplate(d.statuses[i - 1])
+					cont.appendChild(ele);
+					msnry.appended(ele);
+				}
+				msnry.layout();
+				setTimeout(function() {body.scrollTop = body.scrollHeight;},400);
+			}
+		} else {
+				// still not ready, try again later
+		}
+	}
+
+	var tttemplate = function(stat) {
+		var div = document.createElement('div');
+		div.className = 'tweet';
+
+		if(stat.entities.urls.length) {
+			// look for instagram urls
+		}
+
+		div.innerHTML = "<div class='user'><img src='" + stat.user.profile_image_url
+		+ "' /><span>" + stat.user.name + "</span></div><span class='body'>" + highlight(stat)
+		+ "</span>"
+		return div;
+	}
+
+	var highlight = function(stat) {
+		// put a b around the engineisfive mention
+		// loop through stat.entities.hashtags looking for a match on text, insert b at the indices
+		var retstring = stat.text;
+		for(var i = 0; i < stat.entities.hashtags.length; i++) {
+			if(stat.entities.hashtags[i].text == "theengineisfive" 
+				|| stat.entities.hashtags[i].text == "theengineis5") {
+				for(var ii = 0; ii < stat.entities.hashtags[i].indices.length; ii = ii * 2) {
+					if(ii == 0) {
+						retstring = stat.text.substring(0,stat.entities.hashtags[i].indices[ii])
+						+ '<b class="party">#' + stat.entities.hashtags[i].text + '</b>';
+						ii++;
+					} else {
+						retstring += stat.text.substring(stat.entities.hashtags[i].indices[ii - 1], stat.entities.hashtags[i].indices[ii]) + '<b class="party">' + stat.entities.hashtags[i].text + '</b>';
+					}
+				}
+			}
+		}
+		return retstring;
+	}
+
+	tweet();
+	var ttinterval = window.setInterval(tweet,14000);
+
+	// INSTAGRAMM
+
+	var insta = function() {
+		if(Math.random() > 0.5) {
+			instp = instpu;
+		} else {
+			instp = instpt;
+		}
+
+		if(instp.length) {
+			xhr.open("GET","http://theengineisfive.herokuapp.com/insta?" + instp,true);
+		} else {
+			xhr.open("GET","http://theengineisfive.herokuapp.com/insta",true);
+		}
+		xhr.onreadystatechange = irec;
+		xhr.send();
+	}
+
+	var irec = function() {
+		if (xhr.readyState === 4) {
+			var inst = JSON.parse(xhr.response);
+
+			if(inst.data.length) {
+				for(var i = inst.data.length; i > 0; i--) {
+					if(inst.data[i - 1].type == 'image') {
+						var ele = insttemp(inst.data[i - 1])
+						cont.appendChild(ele);
+						msnry.appended(ele)
+					}
+					if(i == inst.data.length) {
+						if('min_tag_id' in inst.pagination) {
+							instpt = inst.pagination.min_tag_id;
+						} else {
+							instpu = inst.data[i - 1].id;
+						}
+						
+					}
+				}
+				msnry.layout();
+				setTimeout(function() {body.scrollTop = body.scrollHeight;},400);
+			}
+		} else {
+			// still not ready
+		}
+	}
+
+	var insttemp = function(ip) {
+		var div = document.createElement('div');
+		div.className = 'inst';
+		div.innerHTML = "<div class='user'><img src='" + ip.user.profile_picture + "' /><span>"
+			+ ip.user.full_name + "</span></div><div class='body'><img class='instapic' src='" + ip.images.low_resolution.url
+			+ "' /><span>" + ihi(ip.tags) + "</span></div>";
+		return div;
+	}
+
+	var ihi = function(tags) {
+		var retstring = '';
+		for(var i = 0; i < tags.length; i++) {
+			if(tags[i] == 'theengineisfive' || tags[i] == 'theengineis5') {
+				retstring += "<b class='party'>#" + tags[i] + "</b>";
+			} else {
+				retstring += "#" + tags[i]
+			}
+			retstring += ' ';
+		}
+		return retstring;
+	}
+
+	var instaint = window.setInterval(insta,23000);
+
+</script>
+</html>
