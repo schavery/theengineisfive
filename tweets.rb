@@ -11,12 +11,6 @@ require 'uri'
 require 'base64'
 require 'net/http'
 
-require 'sinatra/cross_origin'
-
-configure do
-  enable :cross_origin
-end
-
 get '/' do
 	send_file File.expand_path('public/index.html', settings.public_folder)
 end
