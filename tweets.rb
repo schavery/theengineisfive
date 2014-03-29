@@ -4,7 +4,6 @@ apikey = "UPt0WbPPm84hi5oFqho4Ug"
 apisecret = "nRuTTtkNiXSFVtQiApoahymf3pc8SIMSh489KpNwk"
 q = "%40theengineisred%20OR%23theengineisfive%20OR%23theengineis5"
 
-require 'rubygems'
 require 'sinatra'
 require 'json'
 require 'uri'
