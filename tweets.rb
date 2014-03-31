@@ -1,14 +1,23 @@
-
-#=== Twitter
-apikey = "UPt0WbPPm84hi5oFqho4Ug"
-apisecret = "nRuTTtkNiXSFVtQiApoahymf3pc8SIMSh489KpNwk"
-q = "%40theengineisred%20OR%23theengineisfive%20OR%23theengineis5"
-
 require 'sinatra'
 require 'json'
 require 'uri'
 require 'base64'
 require 'net/http'
+
+module Settings
+	def self.set_apikey a; @apikey = a end
+	def self.get_apikey; @apikey end
+	def self.set_apisecret a; @apisecret = a end
+	def self.get_apisecret; @apisecret end
+	def self.set_clientid c; @clientid = c end
+	def self.get_clientid; @clientid end
+end
+load("configs.rb")
+
+# twitter query
+q = "%40theengineisred%20OR%23theengineisfive%20OR%23theengineis5"
+apikey = Settings.get_apikey
+apisecret = Settings.get_apisecret
 
 get '/' do
 	send_file File.expand_path('public/index.html', settings.public_folder)
@@ -50,8 +59,8 @@ end
 get '/insta' do
 	content_type = :json
 
-	ru = "https://api.instagram.com/v1/users/40769184/media/recent/?client_id=3cec68205f704eefbf5efad0f1f54f21"
-	rt = "https://api.instagram.com/v1/tags/theengineisfive/media/recent/?client_id=3cec68205f704eefbf5efad0f1f54f21"
+	ru = "https://api.instagram.com/v1/users/40769184/media/recent/?client_id=" + Settings.get_clientid
+	rt = "https://api.instagram.com/v1/tags/theengineisfive/media/recent/?client_id=" + Settings.get_clientid
 
 	if request.query_string.length != 0
 		#if request.query_string.to_i > "5e15".to_f
@@ -77,3 +86,4 @@ get '/insta' do
 	}
 	res.body
 end
+
